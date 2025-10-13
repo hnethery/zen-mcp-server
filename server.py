@@ -387,7 +387,7 @@ def configure_providers():
     """
     # Log environment variable status for debugging
     logger.debug("Checking environment variables for API keys...")
-    api_keys_to_check = ["OPENAI_API_KEY", "OPENROUTER_API_KEY", "GEMINI_API_KEY", "XAI_API_KEY", "CUSTOM_API_URL"]
+    api_keys_to_check = ["OPENAI_API_KEY", "OPENROUTER_API_KEY", "GEMINI_API_KEY", "XAI_API_KEY", "VOIDAI_API_KEY", "CUSTOM_API_URL"]
     for key in api_keys_to_check:
         value = get_env(key)
         logger.debug(f"  {key}: {'[PRESENT]' if value else '[MISSING]'}")
@@ -399,6 +399,7 @@ def configure_providers():
     from providers.openai import OpenAIModelProvider
     from providers.openrouter import OpenRouterProvider
     from providers.shared import ProviderType
+    from providers.voidai import VoidAIModelProvider
     from providers.xai import XAIModelProvider
     from utils.model_restrictions import get_restriction_service
 
@@ -462,6 +463,13 @@ def configure_providers():
         has_native_apis = True
         logger.info("DIAL API key found - DIAL models available")
 
+    # Check for VoidAI API key
+    voidai_key = get_env("VOIDAI_API_KEY")
+    if voidai_key and voidai_key != "your_voidai_api_key_here":
+        valid_providers.append("VoidAI")
+        has_native_apis = True
+        logger.info("VoidAI API key found - VoidAI models available")
+
     # Check for OpenRouter API key
     openrouter_key = get_env("OPENROUTER_API_KEY")
     logger.debug(f"OpenRouter key check: key={'[PRESENT]' if openrouter_key else '[MISSING]'}")
@@ -517,6 +525,10 @@ def configure_providers():
             ModelProviderRegistry.register_provider(ProviderType.DIAL, DIALModelProvider)
             registered_providers.append(ProviderType.DIAL.value)
             logger.debug(f"Registered provider: {ProviderType.DIAL.value}")
+        if voidai_key and voidai_key != "your_voidai_api_key_here":
+            ModelProviderRegistry.register_provider(ProviderType.VOIDAI, VoidAIModelProvider)
+            registered_providers.append(ProviderType.VOIDAI.value)
+            logger.debug(f"Registered provider: {ProviderType.VOIDAI.value}")
 
     # 2. Custom provider second (for local/private models)
     if has_custom:
@@ -548,6 +560,7 @@ def configure_providers():
             "- OPENAI_API_KEY for OpenAI models\n"
             "- XAI_API_KEY for X.AI GROK models\n"
             "- DIAL_API_KEY for DIAL models\n"
+            "- VOIDAI_API_KEY for VoidAI models\n"
             "- OPENROUTER_API_KEY for OpenRouter (multiple models)\n"
             "- CUSTOM_API_URL for local models (Ollama, vLLM, etc.)"
         )
